@@ -13,11 +13,11 @@ permissions:
 
 env:
   AWS_REGION: us-east-1
-  ECR_REPOSITORY: galactic-outpost-game
-  ECS_SERVICE: galactic-outpost-xray-service
-  ECS_CLUSTER: galactic-outpost-xray
-  ECS_TASK_DEFINITION: galactic-outpost-xray.json
-  CONTAINER_NAME: galactic-outpost-xray
+  ECR_REPOSITORY: tictactoe-game
+  ECS_SERVICE: tictactoe-service
+  ECS_CLUSTER: tictactoe-cluster
+  ECS_TASK_DEFINITION: tictactoe.json
+  CONTAINER_NAME: tictactoe-xray-app
 
 jobs:
   deploy:
@@ -65,5 +65,6 @@ jobs:
           task-definition: ${{ steps.render-task-def.outputs.task-definition }}
           service: ${{ env.ECS_SERVICE }}
           cluster: ${{ env.ECS_CLUSTER }}
-          wait-for-service-stability: false
+          wait-for-service-stability: true
+          wait-for-minutes: 5
           force-new-deployment: true
