@@ -1,5 +1,5 @@
 {
-  "family": "galactic-outpost-xray",
+  "family": "tictactoe-xray-app",
   "networkMode": "bridge",
   "requiresCompatibilities": [
     "EC2"
@@ -8,8 +8,8 @@
   "taskRoleArn": "arn:aws:iam::618246140803:role/ecsTaskRole",
   "containerDefinitions": [
     {
-      "name": "galactic-outpost-xray",
-      "image": "618246140803.dkr.ecr.us-east-1.amazonaws.com/galactic-outpost-game",
+      "name": "tictactoe-xray-app",
+      "image": "618246140803.dkr.ecr.us-east-1.amazonaws.com/tictactoe-game:latest",
       "cpu": 256,
       "memory": 512,
       "essential": true,
