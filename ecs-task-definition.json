@@ -1,0 +1,104 @@
+{
+  "family": "tictactoe-xray-task-ec2",
+  "networkMode": "bridge",
+  "requiresCompatibilities": [
+    "EC2"
+  ],
+  "executionRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/ecsTaskRoleWithXRayPermissions",
+  "containerDefinitions": [
+    {
+      "name": "tictactoe-xray-app",
+      "image": "YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/tictactoe-game:latest",
+      "cpu": 256,
+      "memory": 512,
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "hostPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "name": "PORT",
+          "value": "3000"
+        },
+        {
+          "name": "AWS_XRAY_DAEMON_ADDRESS",
+          "value": "xray-daemon:2000"
+        },
+        {
+          "name": "DB_HOST",
+          "value": "your-rds-postgres-instance.c123456789.us-east-1.rds.amazonaws.com"
+        },
+        {
+          "name": "DB_PORT",
+          "value": "5432"
+        },
+        {
+          "name": "DB_USER",
+          "value": "postgres"
+        },
+        {
+          "name": "DB_PASSWORD",
+          "value": "YOUR_RDS_DB_PASSWORD"
+        },
+        {
+          "name": "DB_NAME",
+          "value": "xray_game_db"
+        },
+        {
+          "name": "DB_SSL",
+          "value": "true"
+        },
+        {
+          "name": "JWT_SECRET",
+          "value": "xray_tictactoe_super_secret_key_2026"
+        },
+        {
+          "name": "LAMBDA_FUNCTION_NAME",
+          "value": "TicTacToe-AI-Engine"
+        }
+      ],
+      "links": [
+        "xray-daemon"
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/tictactoe-xray",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "app"
+        }
+      }
+    },
+    {
+      "name": "xray-daemon",
+      "image": "amazon/aws-xray-daemon:latest",
+      "cpu": 256,
+      "memory": 256,
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 2000,
+          "hostPort": 2000,
+          "protocol": "udp"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/tictactoe-xray",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "xray"
+        }
+      }
+    }
+  ]
+}

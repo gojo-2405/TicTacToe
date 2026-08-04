@@ -1,0 +1,34 @@
+{
+  "name": "aws-xray-tictactoe-game",
+  "version": "2.0.0",
+  "description": "Tic-Tac-Toe Game with Authentication & AWS Lambda AI integration, traced by AWS X-Ray on AWS ECS & AWS RDS",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "aws",
+    "xray",
+    "ecs",
+    "lambda",
+    "rds",
+    "postgres",
+    "tictactoe",
+    "auth",
+    "jwt"
+  ],
+  "author": "Antigravity AI",
+  "license": "MIT",
+  "dependencies": {
+    "@aws-sdk/client-lambda": "^3.718.0",
+    "aws-xray-sdk": "^3.9.0",
+    "axios": "^1.7.9",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.13.1"
+  }
+}

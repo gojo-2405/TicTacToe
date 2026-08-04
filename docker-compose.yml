@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tictactoe-xray-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - AWS_XRAY_DAEMON_ADDRESS=xray-daemon:2000
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=xray_game_db
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+    depends_on:
+      - postgres
+      - xray-daemon
+    restart: unless-stopped
+
+  xray-daemon:
+    image: amazon/aws-xray-daemon:latest
+    container_name: aws-xray-daemon
+    hostname: xray-daemon
+    ports:
+      - "2000:2000/udp"
+    environment:
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+    command: ["-o", "-b", "0.0.0.0:2000"]
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: tictactoe-postgres-db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=xray_game_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    restart: unless-stopped
+
+volumes:
+  pgdata:
