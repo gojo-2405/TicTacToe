@@ -8,7 +8,13 @@ COPY package*.json ./
 RUN npm install --omit=dev
 
 # Copy application source code
-COPY . .
+COPY server.js ./
+COPY db.js ./
+COPY schema.sql ./
+COPY lambda/ ./lambda/
+
+# Explicitly copy frontend public directory (ensures it is always included)
+COPY public/ ./public/
 
 EXPOSE 3000
 
