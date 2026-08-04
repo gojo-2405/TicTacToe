@@ -32,12 +32,19 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'xray_tictactoe_super_secret_key_2026';
 
+// AWS X-Ray Express Open Segment Middleware (MUST BE FIRST)
+app.use(AWSXRay.express.openSegment('TicTacToe-XRay-App'));
+
 app.use(cors());
 app.use(express.json());
+
+// Serve static frontend files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// AWS X-Ray Express Open Segment Middleware
-app.use(AWSXRay.express.openSegment('TicTacToe-XRay-App'));
+// Explicit Root Route & SPA Fallback
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
