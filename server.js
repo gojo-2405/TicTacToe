@@ -42,7 +42,6 @@ app.use(express.json());
 // Serve static frontend files
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(__dirname));
-
 // Explicit Root Route with multi-path resolution
 app.get('/', (req, res) => {
   const p1 = path.join(__dirname, 'public', 'index.html');
