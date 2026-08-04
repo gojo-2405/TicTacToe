@@ -1,15 +1,15 @@
 {
-  "family": "tictactoe-xray-task-ec2",
+  "family": "galactic-outpost-xray",
   "networkMode": "bridge",
   "requiresCompatibilities": [
     "EC2"
   ],
-  "executionRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/ecsTaskExecutionRole",
-  "taskRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/ecsTaskRoleWithXRayPermissions",
+  "executionRoleArn": "arn:aws:iam::618246140803:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::618246140803:role/ecsTaskRole",
   "containerDefinitions": [
     {
-      "name": "tictactoe-xray-app",
-      "image": "YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/tictactoe-game:latest",
+      "name": "galactic-outpost-xray",
+      "image": "618246140803.dkr.ecr.us-east-1.amazonaws.com/galactic-outpost-game",
       "cpu": 256,
       "memory": 512,
       "essential": true,
@@ -35,7 +35,7 @@
         },
         {
           "name": "DB_HOST",
-          "value": "your-rds-postgres-instance.c123456789.us-east-1.rds.amazonaws.com"
+          "value": "database-1.cg3sqq2ikrpw.us-east-1.rds.amazonaws.com"
         },
         {
           "name": "DB_PORT",
@@ -43,11 +43,11 @@
         },
         {
           "name": "DB_USER",
-          "value": "postgres"
+          "value": "root"
         },
         {
           "name": "DB_PASSWORD",
-          "value": "YOUR_RDS_DB_PASSWORD"
+          "value": "admin123"
         },
         {
           "name": "DB_NAME",
