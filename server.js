@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -40,10 +41,15 @@ app.use(express.json());
 
 // Serve static frontend files
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(__dirname));
 
-// Explicit Root Route & SPA Fallback
+// Explicit Root Route with multi-path resolution
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  const p1 = path.join(__dirname, 'public', 'index.html');
+  const p2 = path.join(__dirname, 'index.html');
+  if (fs.existsSync(p1)) return res.sendFile(p1);
+  if (fs.existsSync(p2)) return res.sendFile(p2);
+  res.status(404).send('<h1>Tic-Tac-Toe App Server Active!</h1><p>index.html not found in public/ or root directory.</p>');
 });
 
 function authenticateToken(req, res, next) {
