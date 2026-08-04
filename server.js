@@ -94,6 +94,47 @@ app.get('/api/init-db', async (req, res) => {
   }
 });
 
+// AWS Lambda Diagnostics Endpoint (Returns exact AWS SDK error)
+app.get('/api/debug-lambda', async (req, res) => {
+  const functionName = process.env.LAMBDA_FUNCTION_NAME || 'TicTacToe-AI-Engine';
+  const region = process.env.AWS_REGION || 'us-east-1';
+
+  try {
+    const command = new InvokeCommand({
+      FunctionName: functionName,
+      InvocationType: 'RequestResponse',
+      Payload: JSON.stringify({ board: ['', '', '', '', '', '', '', '', ''], difficulty: 'easy', aiSymbol: 'O', playerSymbol: 'X' })
+    });
+
+    const lambdaRes = await lambdaClient.send(command);
+    const payloadString = Buffer.from(lambdaRes.Payload).toString('utf-8');
+
+    res.json({
+      status: 'SUCCESS',
+      message: 'Successfully invoked AWS Cloud Lambda!',
+      functionName,
+      region,
+      lambdaStatusCode: lambdaRes.StatusCode,
+      functionError: lambdaRes.FunctionError || null,
+      rawPayload: payloadString
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: 'FAILED',
+      functionName,
+      region,
+      errorName: err.name,
+      errorMessage: err.message,
+      errorCode: err.$metadata?.httpStatusCode || null,
+      hint: err.name === 'ResourceNotFoundException' 
+        ? `The Lambda function '${functionName}' was not found in AWS region '${region}'. Check your function name & region!`
+        : (err.name === 'AccessDeniedException' 
+          ? `IAM Task Role lacks permission for lambda:InvokeFunction on '${functionName}'.` 
+          : err.message)
+    });
+  }
+});
+
 // User Registration
 app.post('/api/auth/register', async (req, res) => {
   const { username, email, password } = req.body;
