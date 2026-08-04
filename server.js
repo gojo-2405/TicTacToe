@@ -210,24 +210,41 @@ app.post('/api/game/ai-move', async (req, res) => {
 
   try {
     let aiResponse;
+
     if (process.env.LAMBDA_FUNCTION_NAME) {
+      // Invoke real AWS Lambda function
       const command = new InvokeCommand({
         FunctionName: process.env.LAMBDA_FUNCTION_NAME,
+        InvocationType: 'RequestResponse',
         Payload: JSON.stringify({ board, difficulty, aiSymbol, playerSymbol })
       });
       const lambdaRes = await lambdaClient.send(command);
+
+      // Check for Lambda function error
+      if (lambdaRes.FunctionError) {
+        throw new Error(`Lambda function error: ${lambdaRes.FunctionError} - ${Buffer.from(lambdaRes.Payload).toString('utf-8')}`);
+      }
+
       const payloadString = Buffer.from(lambdaRes.Payload).toString('utf-8');
       const payloadJson = JSON.parse(payloadString);
-      aiResponse = payloadJson.body;
+
+      // Lambda returns { statusCode, body } where body may be object or JSON string
+      if (payloadJson.body !== undefined) {
+        aiResponse = typeof payloadJson.body === 'string' ? JSON.parse(payloadJson.body) : payloadJson.body;
+      } else {
+        // Lambda returned the data directly without statusCode wrapper
+        aiResponse = payloadJson;
+      }
     } else {
+      // Local fallback - call the handler directly
       const localResult = await localAiLambda.handler({ board, difficulty, aiSymbol, playerSymbol });
-      aiResponse = localResult.body;
+      aiResponse = typeof localResult.body === 'string' ? JSON.parse(localResult.body) : localResult.body;
     }
 
     const duration = Date.now() - startTime;
 
     if (subsegment) {
-      subsegment.addAnnotation('BestMoveIndex', aiResponse.bestMove);
+      subsegment.addAnnotation('BestMoveIndex', String(aiResponse.bestMove));
       subsegment.addMetadata('LambdaPayload', aiResponse);
       subsegment.close();
     }
@@ -236,15 +253,30 @@ app.post('/api/game/ai-move', async (req, res) => {
       success: true,
       bestMove: aiResponse.bestMove,
       durationMs: duration,
-      lambdaSource: process.env.LAMBDA_FUNCTION_NAME ? 'AWS Cloud Lambda' : 'Simulated AWS Lambda Subsegment',
+      lambdaSource: process.env.LAMBDA_FUNCTION_NAME ? 'AWS Cloud Lambda' : 'Local Fallback AI',
       traceId: currentSegment ? currentSegment.trace_id : 'X-Ray-Disabled'
     });
   } catch (error) {
+    console.error('[AI Move Error]', error.message);
     if (subsegment) {
       subsegment.addError(error);
       subsegment.close();
     }
-    res.status(500).json({ success: false, error: error.message });
+    // Fallback to local AI if Lambda fails
+    try {
+      const fallback = await localAiLambda.handler({ board, difficulty, aiSymbol, playerSymbol });
+      const fb = typeof fallback.body === 'string' ? JSON.parse(fallback.body) : fallback.body;
+      console.log('[AI Move] Using local fallback AI. Move:', fb.bestMove);
+      return res.json({
+        success: true,
+        bestMove: fb.bestMove,
+        durationMs: Date.now() - startTime,
+        lambdaSource: 'Local Fallback AI (Lambda failed)',
+        traceId: currentSegment ? currentSegment.trace_id : 'X-Ray-Disabled'
+      });
+    } catch (fallbackErr) {
+      return res.status(500).json({ success: false, error: error.message });
+    }
   }
 });
 
