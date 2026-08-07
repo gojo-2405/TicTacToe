@@ -138,6 +138,20 @@ app.get('/api/debug-lambda', async (req, res) => {
 // Cognito Authentication Engine Wrapper
 const cognito = require('./cognito');
 
+// Check if AWS Cognito User Pool is configured
+app.get('/api/auth/cognito-status', (req, res) => {
+  res.json({
+    isCognitoActive: cognito.isConfigured(),
+    userPoolId: process.env.COGNITO_USER_POOL_ID || 'NOT_SET',
+    clientId: process.env.COGNITO_CLIENT_ID || 'NOT_SET',
+    hasClientSecret: Boolean(process.env.COGNITO_CLIENT_SECRET),
+    region: process.env.AWS_REGION || 'us-east-1',
+    message: cognito.isConfigured() 
+      ? 'AWS Cognito User Pool is ACTIVE. Signups will send 6-digit OTP email code!' 
+      : 'COGNITO_CLIENT_ID is NOT configured in .env or ECS env. Set COGNITO_CLIENT_ID to enable Cognito OTP signups!'
+  });
+});
+
 // User Registration (AWS Cognito or Local Database Fallback)
 app.post('/api/auth/register', async (req, res) => {
   const { username, email, password } = req.body;
