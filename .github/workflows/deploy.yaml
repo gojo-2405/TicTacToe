@@ -1,10 +1,7 @@
 name: Deploy Tic-Tac-Toe to AWS ECS with X-Ray (OIDC)
 
+# Manual Trigger Only (Run workflow manually from GitHub Actions tab)
 on:
-  push:
-    branches:
-      - main
-      - master
   workflow_dispatch:
 
 permissions:
@@ -16,7 +13,7 @@ env:
   ECR_REPOSITORY: tictactoe-game
   ECS_SERVICE: tictactoe-service
   ECS_CLUSTER: tictactoe-cluster
-  ECS_TASK_DEFINITION: tictactoe.json
+  ECS_TASK_DEFINITION: ecs-task-definition.json
   CONTAINER_NAME: tictactoe-xray-app
 
 jobs:
