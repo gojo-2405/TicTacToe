@@ -537,5 +537,9 @@ app.listen(PORT, async () => {
   console.log(`🚀 Tic-Tac-Toe AWS X-Ray App running on port ${PORT}`);
   console.log(`📡 AWS X-Ray Daemon Target: ${process.env.AWS_XRAY_DAEMON_ADDRESS || '127.0.0.1:2000'}`);
   console.log(`=======================================================`);
-  await db.initDb();
+  try {
+    await db.initDb();
+  } catch (err) {
+    console.warn('[Server Startup Warning] Could not pre-initialize DB tables:', err.message);
+  }
 });
