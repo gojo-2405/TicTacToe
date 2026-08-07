@@ -10,6 +10,7 @@ RUN npm install --omit=dev
 # Copy application source code
 COPY server.js ./
 COPY db.js ./
+COPY cognito.js ./
 COPY schema.sql ./
 COPY lambda/ ./lambda/
 
