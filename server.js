@@ -135,7 +135,10 @@ app.get('/api/debug-lambda', async (req, res) => {
   }
 });
 
-// User Registration
+// Cognito Authentication Engine Wrapper
+const cognito = require('./cognito');
+
+// User Registration (AWS Cognito or Local Database Fallback)
 app.post('/api/auth/register', async (req, res) => {
   const { username, email, password } = req.body;
   const currentSegment = AWSXRay.getSegment();
@@ -149,6 +152,44 @@ app.post('/api/auth/register', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Username, email, and password required' });
   }
 
+  // Check if Cognito is configured in environment
+  if (cognito.isConfigured()) {
+    const subsegment = currentSegment ? currentSegment.addNewSubsegment('Cognito-SignUp-Subsegment') : null;
+    try {
+      const cognitoRes = await cognito.signUpUser(username, email, password);
+      if (subsegment) subsegment.close();
+
+      // Ensure user profile entry exists in RDS database as well
+      try {
+        await db.query(
+          'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) ON CONFLICT (username) DO NOTHING',
+          [username, email, 'COGNITO_USER']
+        );
+      } catch (dbErr) {
+        console.warn('[RDS Sync Warning]', dbErr.message);
+      }
+
+      return res.json({
+        success: true,
+        requiresConfirmation: !cognitoRes.isConfirmed,
+        username: username,
+        message: 'Cognito registration successful! Check your email for confirmation code.',
+        traceId: currentSegment ? currentSegment.trace_id : 'X-Ray-Disabled'
+      });
+    } catch (cognitoErr) {
+      if (subsegment) {
+        subsegment.addError(cognitoErr);
+        subsegment.close();
+      }
+      return res.status(400).json({
+        success: false,
+        error: `Cognito Signup Error: ${cognitoErr.message}`,
+        traceId: currentSegment ? currentSegment.trace_id : 'X-Ray-Disabled'
+      });
+    }
+  }
+
+  // Local DB Fallback Registration
   const subsegment = currentSegment ? currentSegment.addNewSubsegment('BcryptPasswordHash') : null;
 
   try {
@@ -183,7 +224,45 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-// User Login
+// AWS Cognito Email Code Confirmation Endpoint
+app.post('/api/auth/confirm', async (req, res) => {
+  const { username, code } = req.body;
+  const currentSegment = AWSXRay.getSegment();
+
+  if (currentSegment) {
+    currentSegment.addAnnotation('UserAction', 'ConfirmCognitoCode');
+    currentSegment.addAnnotation('Username', username || 'Anonymous');
+  }
+
+  if (!username || !code) {
+    return res.status(400).json({ success: false, error: 'Username and verification code are required' });
+  }
+
+  const subsegment = currentSegment ? currentSegment.addNewSubsegment('Cognito-ConfirmSignUp-Subsegment') : null;
+
+  try {
+    await cognito.confirmSignUp(username, code);
+    if (subsegment) subsegment.close();
+
+    res.json({
+      success: true,
+      message: 'Email verified successfully! You can now log in.',
+      traceId: currentSegment ? currentSegment.trace_id : 'X-Ray-Disabled'
+    });
+  } catch (error) {
+    if (subsegment) {
+      subsegment.addError(error);
+      subsegment.close();
+    }
+    res.status(400).json({
+      success: false,
+      error: `Verification Error: ${error.message}`,
+      traceId: currentSegment ? currentSegment.trace_id : 'X-Ray-Disabled'
+    });
+  }
+});
+
+// User Login (AWS Cognito or Local Database Fallback)
 app.post('/api/auth/login', async (req, res) => {
   const { username, password } = req.body;
   const currentSegment = AWSXRay.getSegment();
@@ -193,6 +272,55 @@ app.post('/api/auth/login', async (req, res) => {
     currentSegment.addAnnotation('AttemptedUsername', username || 'Unknown');
   }
 
+  // AWS Cognito Login Flow
+  if (cognito.isConfigured()) {
+    const subsegment = currentSegment ? currentSegment.addNewSubsegment('Cognito-InitiateAuth-Subsegment') : null;
+    try {
+      const authResult = await cognito.loginUser(username, password);
+      if (subsegment) subsegment.close();
+
+      // Retrieve user details from RDS database or initialize
+      let dbUser;
+      try {
+        const userRes = await db.query('SELECT id, username, email, wins, losses, draws FROM users WHERE username = $1', [username]);
+        if (userRes.rows.length > 0) {
+          dbUser = userRes.rows[0];
+        } else {
+          const insertRes = await db.query(
+            'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email, wins, losses, draws',
+            [username, `${username}@cognito.user`, 'COGNITO_USER']
+          );
+          dbUser = insertRes.rows[0];
+        }
+      } catch (dbErr) {
+        dbUser = { id: 1, username: username, email: `${username}@cognito.user`, wins: 0, losses: 0, draws: 0 };
+      }
+
+      // Generate app session token or pass Cognito IdToken
+      const token = authResult.idToken || jwt.sign({ id: dbUser.id, username: dbUser.username }, JWT_SECRET, { expiresIn: '24h' });
+
+      return res.json({
+        success: true,
+        token: token,
+        accessToken: authResult.accessToken,
+        user: dbUser,
+        authProvider: 'AWS Cognito User Pools',
+        traceId: currentSegment ? currentSegment.trace_id : 'X-Ray-Disabled'
+      });
+    } catch (cognitoErr) {
+      if (subsegment) {
+        subsegment.addError(cognitoErr);
+        subsegment.close();
+      }
+      return res.status(401).json({
+        success: false,
+        error: `Cognito Authentication Failed: ${cognitoErr.message}`,
+        traceId: currentSegment ? currentSegment.trace_id : 'X-Ray-Disabled'
+      });
+    }
+  }
+
+  // Local DB Fallback Login
   try {
     const result = await db.query('SELECT * FROM users WHERE username = $1 OR email = $1', [username]);
 
