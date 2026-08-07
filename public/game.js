@@ -380,9 +380,13 @@ function switchAuthTab(tab) {
   if (tab === 'login') {
     document.getElementById('tabLogin')?.classList.add('active');
     document.getElementById('loginForm')?.classList.add('active');
-  } else {
+  } else if (tab === 'register') {
     document.getElementById('tabRegister')?.classList.add('active');
     document.getElementById('registerForm')?.classList.add('active');
+  } else if (tab === 'confirm') {
+    document.getElementById('tabConfirm')?.classList.add('active');
+    document.getElementById('tabConfirm').style.display = 'inline-block';
+    document.getElementById('confirmForm')?.classList.add('active');
   }
 }
 
@@ -404,8 +408,8 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
       gameState.user = data.user;
       renderUserStatus(data.user);
       closeAuthModal();
-      logActivity(`✅ Logged in as ${data.user.username}`, 'success');
-      updateXRayInspector(data.traceId, 0, 15, 'Postgres-Auth-Verify');
+      logActivity(`✅ Logged in via ${data.authProvider || 'Auth'} as ${data.user.username}`, 'success');
+      updateXRayInspector(data.traceId, 0, 15, 'Cognito-InitiateAuth-Subsegment');
     } else {
       logActivity(`Login failed: ${data.error}`, 'error');
       alert(`Login failed: ${data.error}`);
@@ -420,7 +424,7 @@ document.getElementById('registerForm')?.addEventListener('submit', async (e) =>
   const username = document.getElementById('regUsername').value;
   const email = document.getElementById('regEmail').value;
   const password = document.getElementById('regPassword').value;
-  logActivity(`Registering '${username}'...`, 'info');
+  logActivity(`Registering '${username}' with Cognito...`, 'info');
   try {
     const res = await fetch('/api/auth/register', {
       method: 'POST',
@@ -429,20 +433,54 @@ document.getElementById('registerForm')?.addEventListener('submit', async (e) =>
     });
     const data = await res.json();
     if (data.success) {
-      localStorage.setItem('tictactoe_jwt', data.token);
-      gameState.token = data.token;
-      gameState.user = data.user;
-      renderUserStatus(data.user);
-      closeAuthModal();
-      logActivity(`✅ Registered! Welcome ${data.user.username}`, 'success');
-      updateXRayInspector(data.traceId, 0, 22, 'Bcrypt-Hash-Plus-RDS-INSERT');
-      loadLeaderboard();
+      if (data.requiresConfirmation) {
+        logActivity(`📩 Registration code sent to email for ${username}. Please verify!`, 'success');
+        document.getElementById('confirmUsername').value = username;
+        switchAuthTab('confirm');
+        alert(`Account created in AWS Cognito! Please enter the verification code sent to ${email}.`);
+      } else {
+        localStorage.setItem('tictactoe_jwt', data.token);
+        gameState.token = data.token;
+        gameState.user = data.user;
+        renderUserStatus(data.user);
+        closeAuthModal();
+        logActivity(`✅ Registered! Welcome ${data.user.username}`, 'success');
+        loadLeaderboard();
+      }
+      updateXRayInspector(data.traceId, 0, 22, 'Cognito-SignUp-Subsegment');
     } else {
       logActivity(`Registration failed: ${data.error}`, 'error');
       alert(`Registration failed: ${data.error}`);
     }
   } catch (err) {
     logActivity(`Register error: ${err.message}`, 'error');
+  }
+});
+
+document.getElementById('confirmForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const username = document.getElementById('confirmUsername').value;
+  const code = document.getElementById('confirmCode').value;
+  logActivity(`Verifying email code for '${username}'...`, 'info');
+  try {
+    const res = await fetch('/api/auth/confirm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, code })
+    });
+    const data = await res.json();
+    if (data.success) {
+      logActivity(`✅ Email verified! You can now log in.`, 'success');
+      switchAuthTab('login');
+      document.getElementById('loginUsername').value = username;
+      alert(`Email verified successfully! Please enter your password to sign in.`);
+      updateXRayInspector(data.traceId, 0, 18, 'Cognito-ConfirmSignUp-Subsegment');
+    } else {
+      logActivity(`Verification failed: ${data.error}`, 'error');
+      alert(`Verification failed: ${data.error}`);
+    }
+  } catch (err) {
+    logActivity(`Verification error: ${err.message}`, 'error');
   }
 });
 
