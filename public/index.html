@@ -3,47 +3,51 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tic-Tac-Toe: AWS X-Ray, Lambda & RDS Testbed</title>
+  <title>CYBERARENA: AWS Cognito & X-Ray Telemetry Gaming Portal</title>
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
+  <!-- Animated Cyber Particle Grid Overlay -->
+  <div class="cyber-grid-overlay"></div>
   <div class="stars-bg"></div>
   
   <div class="app-container">
     <!-- Navbar Header -->
     <header class="header">
       <div class="brand">
-        <div class="logo-icon">❌⭕</div>
+        <div class="logo-badge">
+          <span class="logo-icon">⚔️</span>
+        </div>
         <div>
-          <h1>TIC-TAC-TOE X-RAY</h1>
-          <span class="subtitle">AWS ECS + AWS Lambda AI + AWS RDS Postgres Telemetry</span>
+          <h1 class="brand-title">CYBERARENA <span class="tag-badge">X-RAY TELEMETRY</span></h1>
+          <span class="subtitle">AWS Cognito Auth • AWS Lambda AI • AWS ECS • AWS RDS PostgreSQL</span>
         </div>
       </div>
       
       <div class="user-status-area" id="userStatusArea">
-        <button class="btn btn-primary" onclick="openAuthModal('login')">🔑 Login / Register</button>
+        <button class="btn btn-primary glow-btn" onclick="openAuthModal('login')">🔑 Sign In / Register</button>
       </div>
     </header>
 
     <main class="dashboard-grid">
       
       <!-- Panel 1: Tic-Tac-Toe Interactive Game Arena -->
-      <section class="panel game-panel">
+      <section class="panel game-panel cyber-card">
         <div class="panel-header-flex">
-          <h2><span class="icon">🎮</span> Arena Matrix — vs AWS Lambda AI</h2>
+          <h2><span class="icon-pulse">🎮</span> ARENA MATRIX — vs AWS Lambda AI</h2>
           <div class="game-controls">
-            <select id="difficultySelect">
-              <option value="hard">Hard (Minimax AI)</option>
-              <option value="easy">Easy (Random AI)</option>
+            <select id="difficultySelect" class="cyber-select">
+              <option value="hard">⚡ HARD (Minimax AI)</option>
+              <option value="easy">🎯 EASY (Random AI)</option>
             </select>
           </div>
         </div>
 
         <div class="game-status-bar" id="gameStatusText">
-          Your turn! Click a cell — you are ❌ X
+          YOUR TURN! CLICK A CELL — YOU ARE ❌ X
         </div>
 
         <!-- 3x3 Tic-Tac-Toe Board -->
@@ -59,14 +63,14 @@
           <button class="cell" data-index="8"></button>
         </div>
 
-        <button class="btn btn-secondary full-width" onclick="resetGame()">
-          🔄 Restart Game Match
+        <button class="btn btn-secondary full-width cyber-btn-restart" onclick="resetGame()">
+          🔄 RESTART MATCH ARENA
         </button>
       </section>
 
       <!-- Panel 2: AWS X-Ray Telemetry & Service Map Inspector -->
-      <section class="panel telemetry-panel">
-        <h2><span class="icon">📡</span> AWS X-Ray Live Trace Inspector</h2>
+      <section class="panel telemetry-panel cyber-card">
+        <h2><span class="icon-pulse">📡</span> AWS X-RAY LIVE TRACE INSPECTOR</h2>
         <p class="description">Real-time trace headers & execution breakdown for API calls:</p>
         
         <div class="trace-box">
@@ -76,15 +80,15 @@
           </div>
           <div class="trace-field">
             <span class="trace-key">AWS Lambda AI Latency:</span>
-            <span class="trace-val highlight" id="lambdaLatency">0 ms</span>
+            <span class="trace-val highlight-green" id="lambdaLatency">0 ms</span>
           </div>
           <div class="trace-field">
             <span class="trace-key">RDS Postgres DB Time:</span>
-            <span class="trace-val highlight" id="dbLatency">0 ms</span>
+            <span class="trace-val highlight-purple" id="dbLatency">0 ms</span>
           </div>
           <div class="trace-field">
             <span class="trace-key">Last Subsegment:</span>
-            <span class="trace-val" id="subsegmentDisplay">None</span>
+            <span class="trace-val highlight-cyan" id="subsegmentDisplay">None</span>
           </div>
         </div>
 
@@ -103,16 +107,16 @@
         <div class="activity-log-wrapper">
           <h3>Telemetry Event Stream</h3>
           <div class="activity-log" id="activityLog">
-            <div class="log-item system">[System Ready] Connected to Tic-Tac-Toe Backend.</div>
+            <div class="log-item system">[System Ready] Connected to CyberArena X-Ray Telemetry Engine.</div>
           </div>
         </div>
       </section>
 
       <!-- Panel 3: AWS RDS PostgreSQL Leaderboard & Match History -->
-      <section class="panel leaderboard-panel">
+      <section class="panel leaderboard-panel cyber-card">
         <div class="panel-header-flex">
-          <h2><span class="icon">📊</span> RDS Postgres Leaderboard</h2>
-          <button class="btn btn-small" onclick="loadLeaderboard()">🔄 Refresh</button>
+          <h2><span class="icon-pulse">🏆</span> ESPORTS RDS LEADERBOARD</h2>
+          <button class="btn btn-small btn-secondary" onclick="loadLeaderboard()">🔄 Refresh</button>
         </div>
         
         <div class="table-responsive">
@@ -135,11 +139,11 @@
         </div>
 
         <div class="xray-guide-box">
-          <h4>💡 AWS X-Ray Tracing Architecture:</h4>
+          <h4>💡 AWS X-Ray Telemetry Architecture:</h4>
           <ul>
-            <li><strong>Authentication:</strong> Bcrypt password hashing subsegment & RDS User SELECT query.</li>
+            <li><strong>AWS Cognito Auth:</strong> <code>@aws-sdk/client-cognito-identity-provider</code> signup/login traced on X-Ray.</li>
             <li><strong>AWS Lambda AI:</strong> <code>@aws-sdk/client-lambda</code> invoke traced on X-Ray Service Map.</li>
-            <li><strong>RDS Match Record:</strong> <code>aws-xray-sdk.capturePostgres</code> records INSERT & UPDATE statements.</li>
+            <li><strong>RDS Match Records:</strong> <code>aws-xray-sdk.capturePostgres</code> records SQL statements.</li>
           </ul>
         </div>
       </section>
@@ -148,31 +152,32 @@
 
     <!-- Footer -->
     <footer class="footer">
-      <span>Built with Express.js • AWS X-Ray SDK • AWS Lambda • AWS ECS • AWS RDS PostgreSQL</span>
+      <span>Built with Express.js • AWS X-Ray SDK • AWS Cognito • AWS Lambda • AWS ECS • AWS RDS PostgreSQL</span>
     </footer>
   </div>
 
   <!-- Authentication Modal -->
   <div class="modal-overlay" id="authModal">
-    <div class="modal-card">
+    <div class="modal-card cyber-modal">
       <button class="modal-close" onclick="closeAuthModal()">✖</button>
 
       <div class="tab-buttons">
-        <button class="tab-btn active" id="tabLogin" onclick="switchAuthTab('login')">Login</button>
+        <button class="tab-btn active" id="tabLogin" onclick="switchAuthTab('login')">Sign In</button>
         <button class="tab-btn" id="tabRegister" onclick="switchAuthTab('register')">Register</button>
+        <button class="tab-btn" id="tabConfirm" onclick="switchAuthTab('confirm')" style="display:none;">Verify Code</button>
       </div>
 
       <!-- Login Form -->
       <form id="loginForm" class="auth-form active">
         <div class="input-group">
-          <label for="loginUsername">Username or Email</label>
+          <label for="loginUsername">Username / Email</label>
           <input type="text" id="loginUsername" placeholder="Enter username or email" required>
         </div>
         <div class="input-group">
           <label for="loginPassword">Password</label>
           <input type="password" id="loginPassword" placeholder="Enter password" required>
         </div>
-        <button type="submit" class="btn btn-primary full-width margin-top">Sign In</button>
+        <button type="submit" class="btn btn-primary full-width margin-top glow-btn">Sign In to CyberArena</button>
       </form>
 
       <!-- Register Form -->
@@ -186,10 +191,23 @@
           <input type="email" id="regEmail" placeholder="Enter email address" required>
         </div>
         <div class="input-group">
-          <label for="regPassword">Password</label>
-          <input type="password" id="regPassword" placeholder="Choose a password" required>
+          <label for="regPassword">Password (Min 8 chars, numbers & symbols)</label>
+          <input type="password" id="regPassword" placeholder="Choose a strong password" required>
         </div>
-        <button type="submit" class="btn btn-primary full-width margin-top">Create Account</button>
+        <button type="submit" class="btn btn-primary full-width margin-top glow-btn">Create Cognito Account</button>
+      </form>
+
+      <!-- Email Verification Code Form -->
+      <form id="confirmForm" class="auth-form">
+        <div class="input-group">
+          <label for="confirmUsername">Username</label>
+          <input type="text" id="confirmUsername" placeholder="Username" required readonly>
+        </div>
+        <div class="input-group">
+          <label for="confirmCode">Cognito Email Verification Code</label>
+          <input type="text" id="confirmCode" placeholder="Enter 6-digit code sent to your email" required>
+        </div>
+        <button type="submit" class="btn btn-primary full-width margin-top glow-btn">Verify Email & Activate</button>
       </form>
     </div>
   </div>
