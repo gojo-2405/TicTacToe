@@ -367,9 +367,20 @@ function logout() {
 /* ─────────────────────────────────────────────
    AUTH MODAL
 ───────────────────────────────────────────── */
-function openAuthModal(tab = 'login') {
+async function openAuthModal(tab = 'login') {
   document.getElementById('authModal')?.classList.add('active');
   switchAuthTab(tab);
+
+  // Check if Cognito is active
+  try {
+    const res = await fetch('/api/auth/cognito-status');
+    const data = await res.json();
+    if (data.isCognitoActive) {
+      logActivity(`🔐 AWS Cognito User Pool ACTIVE (${data.clientId})`, 'success');
+    } else {
+      logActivity(`⚠️ Cognito Client ID not set in .env (Using Local DB Auth fallback)`, 'trace');
+    }
+  } catch (e) {}
 }
 function closeAuthModal() {
   document.getElementById('authModal')?.classList.remove('active');
