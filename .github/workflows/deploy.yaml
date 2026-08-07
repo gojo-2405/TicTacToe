@@ -13,7 +13,7 @@ env:
   ECR_REPOSITORY: tictactoe-game
   ECS_SERVICE: tictactoe-service
   ECS_CLUSTER: tictactoe-cluster
-  ECS_TASK_DEFINITION: ecs-task-definition.json
+  ECS_TASK_DEFINITION: tictactoe.json
   CONTAINER_NAME: tictactoe-xray-app
 
 jobs:
